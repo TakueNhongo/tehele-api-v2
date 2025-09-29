@@ -69,6 +69,8 @@ export class StartupService {
       const startup = await this.startupModel.create({
         ...createStartupDto,
         team: undefined,
+        // to be removed
+        businessVerified: true,
         createdBy: userId,
       });
 
@@ -290,12 +292,12 @@ Respond strictly using this exact JSON schema:
 {
   "financialHealthRecommendations": {
     "burnRateOptimization": "Specific recommendation based on provided burn rate and revenue data.",
-    "fundingRecommendations": "Exact funding stage and amount recommendations based on the startup’s existing financial data.",
+    "fundingRecommendations": "Exact funding stage and amount recommendations based on the startup's existing financial data.",
     "cashFlowManagementTips": "Insights referencing specific financial patterns or historical data provided."
   },
   "growthAndTractionRecommendations": {
     "customerAcquisitionSuggestions": "Concrete customer acquisition strategies derived from provided growth rate, revenue model, and traction.",
-    "revenueGrowthTactics": "Detailed revenue growth methods leveraging the startup’s traction, revenue model, and industry specifics."
+    "revenueGrowthTactics": "Detailed revenue growth methods leveraging the startup's traction, revenue model, and industry specifics."
   },
   "teamAndTalentRecommendations": {
     "roleSpecificHiringRecommendations": "Specific hiring suggestions addressing gaps explicitly identified in the provided team data.",
@@ -325,6 +327,84 @@ Respond strictly using this exact JSON schema:
       return response;
     } catch (error) {
       console.error('Error generating startup insights:', error.message);
+      throw error;
+    }
+  }
+
+  async generateMarketResearch(startupId) {
+    const startupData = await this.startupModel.findById(startupId).lean();
+    try {
+      const openai = new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY,
+      });
+
+      const prompt = `
+You are an AI market research analyst specializing in startup market analysis.
+
+Given the following startup data, generate comprehensive market research insights tailored to the startup's industry, location, and business model.
+
+STARTUP DATA:
+${JSON.stringify(startupData, null, 2)}
+
+Respond strictly using this exact JSON schema:
+{
+  "marketSizeAndOpportunity": {
+    "totalAddressableMarket": "Detailed analysis of the total addressable market size and growth projections for the startup's industry and geographic region.",
+    "geographicOpportunities": "Specific geographic expansion opportunities based on the startup's current location and target markets.",
+    "marketTrends": "Current and emerging trends in the startup's industry that could impact growth and market positioning."
+  },
+  "competitiveLandscape": {
+    "directCompetitors": "Analysis of direct competitors in the startup's space, including their market position and competitive advantages.",
+    "customerSegments": "Detailed breakdown of target customer segments and their specific needs and pain points.",
+    "pricingAnalysis": "Market pricing analysis and recommendations for competitive positioning."
+  },
+  "growthOpportunities": {
+    "expansionMarkets": "Specific market expansion opportunities and vertical expansion potential.",
+    "productExtensions": "Product extension and feature development opportunities based on market gaps.",
+    "partnershipPotential": "Strategic partnership opportunities that could accelerate growth."
+  },
+  "marketRisksAndChallenges": {
+    "economicHeadwinds": "Economic factors and market conditions that could impact the startup's growth trajectory.",
+    "regulatoryChanges": "Regulatory and compliance considerations relevant to the startup's industry and operations.",
+    "marketSaturation": "Analysis of market saturation risks and strategies to maintain competitive advantage."
+  },
+  "competitors": [
+    {
+      "name": "String - Competitor company name",
+      "funding": "String - Latest funding round and amount",
+      "employees": "String - Company size range",
+      "focus": "String - Primary market focus or specialization",
+      "summary": "String - Detailed description of their product/service offering and market position"
+    }
+  ]
+}
+
+Important guidelines:
+1. All insights should be specific to the startup's industry, location, and business model.
+2. Include 5 realistic competitors with varying funding stages, company sizes, and market focuses.
+3. Competitor data should be realistic and relevant to the startup's space.
+4. Market analysis should reference specific industry data and trends.
+5. Ensure all recommendations are actionable and tailored to the startup's context.
+6. Focus on providing strategic market intelligence rather than generic advice.`;
+
+      const completion = await openai.chat.completions.create({
+        model: 'gpt-4o',
+        messages: [
+          {
+            role: 'system',
+            content:
+              'You are a market research analyst specializing in startup market analysis. Always respond with valid JSON exactly matching the provided schema.',
+          },
+          { role: 'user', content: prompt },
+        ],
+        response_format: { type: 'json_object' },
+      });
+
+      const response = JSON.parse(completion.choices[0].message.content);
+      console.log('Market Research Response:', response);
+      return response;
+    } catch (error) {
+      console.error('Error generating market research:', error.message);
       throw error;
     }
   }

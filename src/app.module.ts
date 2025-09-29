@@ -29,6 +29,8 @@ import { WebSocketModule } from './modules/websocket/websocket.module';
 import { InvestmentModule } from './modules/investment/investment.module';
 import { TeamMemberModule } from './modules/team-member/team-member.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { DocumentsModule } from './modules/documents/documents.module';
+import { ChatModule } from './modules/chat/chat.module';
 
 @Module({
   imports: [
@@ -61,6 +63,8 @@ import { AuthModule } from './modules/auth/auth.module';
     WebSocketModule,
     InvestmentModule,
     TeamMemberModule,
+    DocumentsModule,
+    ChatModule,
   ],
   controllers: [AppController],
   providers: [

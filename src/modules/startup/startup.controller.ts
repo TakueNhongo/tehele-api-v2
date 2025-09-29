@@ -70,6 +70,12 @@ export class StartupController {
     return this.startupService.generateStartupInsights(id);
   }
 
+  @Public()
+  @Get(':id/insights/market-research')
+  async getMarketResearch(@Param('id') id: string) {
+    return this.startupService.generateMarketResearch(id);
+  }
+
   @Get(':id')
   @Public()
   async getStartup(@Param('id') id: string, @Req() req: RequestWithUser) {

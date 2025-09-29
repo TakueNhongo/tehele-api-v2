@@ -1,0 +1,66 @@
+import { Controller, Post, Body } from '@nestjs/common';
+import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import { AuthService } from './auth.service';
+import { Public } from 'src/decorators/public.decorator';
+import { SendOtpDto } from './dto/send-otp.dto';
+import { VerifyOtpDto } from '../user/dto/verify-otp.dto';
+
+@ApiTags('Auth')
+@Controller('auth')
+export class AuthController {
+  constructor(private readonly authService: AuthService) {}
+
+  @Public()
+  @Post('send-otp')
+  @ApiOperation({ summary: 'Send OTP to email for authentication' })
+  async sendOTP(@Body() sendOtpDto: SendOtpDto) {
+    return this.authService.sendOTP(sendOtpDto.email);
+  }
+
+  @Public()
+  @Post('verify-otp')
+  @ApiOperation({
+    summary: 'Verify OTP and authenticate or prompt registration',
+  })
+  async verifyOTP(@Body() verifyOtpDto: VerifyOtpDto) {
+    return this.authService.verifyOTP(verifyOtpDto.email, verifyOtpDto.otp);
+  }
+
+  @Public()
+  @Post('create-user')
+  @ApiOperation({
+    summary: 'Create user account after OTP verification',
+  })
+  async createUser(
+    @Body()
+    createUserDto: {
+      firstName: string;
+      lastName: string;
+      email: string;
+      isUsCitizen: boolean;
+      isAuthorizedToWorkInUs: boolean;
+    },
+  ) {
+    return this.authService.createUser(createUserDto);
+  }
+
+  @Public()
+  @Post('activate-profile')
+  @ApiOperation({
+    summary: 'Activate a specific profile for an existing user',
+  })
+  async activateProfile(
+    @Body()
+    activateProfileDto: {
+      userId: string;
+      profileType: 'startup' | 'investor';
+      profileId: string;
+    },
+  ) {
+    return this.authService.activateProfile(
+      activateProfileDto.userId,
+      activateProfileDto.profileType,
+      activateProfileDto.profileId,
+    );
+  }
+}

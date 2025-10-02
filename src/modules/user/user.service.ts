@@ -62,51 +62,7 @@ export class UserService {
     return token;
   }
 
-  async updatePassword(
-    userId: Types.ObjectId,
-    currentPassword: string,
-    newPassword: string,
-  ): Promise<UserDocument> {
-    try {
-      const user = await this.userModel.findById(userId);
-
-      if (!user) {
-        throw new NotFoundException('User not found');
-      }
-
-      // Verify current password
-      const isPasswordValid = await bcrypt.compare(
-        currentPassword,
-        user.password,
-      );
-
-      if (!isPasswordValid) {
-        throw new BadRequestException('Current password is incorrect');
-      }
-
-      // Check if new password meets requirements
-      if (newPassword.length < 8) {
-        throw new BadRequestException(
-          'New password must be at least 8 characters long',
-        );
-      }
-
-      user.password = newPassword;
-      await user.save();
-
-      return user;
-    } catch (error) {
-      if (
-        error instanceof NotFoundException ||
-        error instanceof UnauthorizedException ||
-        error instanceof BadRequestException
-      ) {
-        throw error;
-      }
-
-      throw new InternalServerErrorException('Error updating password');
-    }
-  }
+  
 
   async verifyEmail(token: string): Promise<any> {
     try {
@@ -350,66 +306,7 @@ export class UserService {
     }
   }
 
-  async resetPassword(token: string, newPassword: string): Promise<any> {
-    try {
-      // Verify the token
-      const decoded = this.jwtService.verify(token, {
-        secret: process.env.JWT_SECRET,
-      });
-
-      if (decoded.purpose !== 'password-reset') {
-        throw new BadRequestException('Invalid reset token');
-      }
-
-      // Find the user with the valid token
-      const user = await this.userModel.findOne({
-        _id: decoded.userId,
-        passwordResetToken: token,
-        passwordResetExpires: { $gt: Date.now() },
-      });
-
-      if (!user) {
-        throw new BadRequestException('Invalid or expired reset token');
-      }
-
-      // Update the password and clear reset token data
-      user.password = newPassword;
-      user.passwordResetToken = undefined;
-      user.passwordResetExpires = undefined;
-      await user.save();
-
-      let startup;
-      let investor;
-      if (user.startupProfileIds && user.startupProfileIds.length > 0) {
-        startup = await this.startupService.getStartupById(
-          user.startupProfileIds[0].toString(),
-        );
-      }
-
-      if (user.investorProfileIds && user.investorProfileIds.length > 0) {
-        investor = await this.investorService.getInvestorProfile(
-          user.investorProfileIds[0],
-        );
-      }
-
-      const sessionId = await this.createSesssion(user);
-      const auth_token = this.generateToken(user, sessionId);
-
-      return {
-        user,
-        token: auth_token,
-        ...(startup ? { startup } : { investor }),
-      };
-    } catch (error) {
-      if (
-        error instanceof BadRequestException ||
-        error instanceof UnauthorizedException
-      ) {
-        throw error;
-      }
-      throw new InternalServerErrorException('Error resetting password');
-    }
-  }
+ 
 
   async resendVerification(userId: string) {
     const user = await this.userModel.findById(userId);
@@ -451,31 +348,7 @@ export class UserService {
     };
   }
 
-  async reAuthenticate(reAuthDto: ReAuthDto): Promise<any> {
-    try {
-      const user = await this.userModel.findOne({ email: reAuthDto.email });
-
-      if (!user) {
-        throw new UnauthorizedException('Invalid credentials');
-      }
-
-      const isPasswordValid = await bcrypt.compare(
-        reAuthDto.password,
-        user.password,
-      );
-
-      if (!isPasswordValid) {
-        throw new UnauthorizedException('Invalid password');
-      }
-
-      return { success: true };
-    } catch (error) {
-      if (error instanceof UnauthorizedException) {
-        throw error;
-      }
-      throw new InternalServerErrorException('Error during re-authentication');
-    }
-  }
+  
 
   async sendOTP(email: string): Promise<any> {
     const user = await this.userModel.findOne({
@@ -506,37 +379,7 @@ export class UserService {
     return { message: 'OTP sent to email' };
   }
 
-  async login(loginUserDto: LoginUserDto): Promise<any> {
-    const user = await this.userModel.findOne({
-      email: loginUserDto.email?.toLowerCase(),
-    });
-
-    if (
-      !user ||
-      !(await bcrypt.compare(loginUserDto.password, user.password))
-    ) {
-      throw new UnauthorizedException('Invalid credentials');
-    }
-
-    // Generate OTP for 2FA
-    const otp = crypto.randomInt(100000, 999999).toString();
-    user.otpCode = await bcrypt.hash(otp, 5);
-    user.otpExpiresAt = new Date(Date.now() + 5 * 60 * 1000);
-    await user.save();
-
-    try {
-      this.mailerService.sendMail({
-        to: user.email,
-        subject: 'Your OTP Code',
-        html: getOTPEmailTemplate(user.email, otp),
-        text: `Your OTP code is: ${otp}. This code will expire in 10 minutes. If you didn't request this code, please ignore this email.`,
-      });
-    } catch (e) {
-      console.log('Error sending otp');
-    }
-
-    return { message: 'OTP sent to email' };
-  }
+ 
 
   async verifyOtp(verifyOtpDto: VerifyOtpDto): Promise<any> {
     const user = await this.userModel.findOne({ email: verifyOtpDto.email });

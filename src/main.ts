@@ -5,7 +5,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { MongooseExceptionFilter } from './filters/mongoose-exception.filter';
 import * as express from 'express';
 
-import { join } from 'path'; 
+import { join } from 'path';
 import * as fs from 'fs-extra';
 import * as path from 'path';
 
@@ -79,8 +79,9 @@ async function bootstrap() {
       </html>
     `);
   });
-  // Serve static files from the 'public' directory at the project root
-  app.use('/public', express.static(join(__dirname, '..', 'public')));
+
+  const publicDirectory = join(process.cwd(), 'public'); // Absolute path
+  app.use('/public', express.static(publicDirectory));
 
   // Serve tenant.html when /tenant is accessed
   app.use('/tenant', async (req, res) => {

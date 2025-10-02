@@ -15,13 +15,8 @@ export class User {
   @Prop({ type: String, required: true, unique: true, lowercase: true })
   email: string;
 
-  @Prop({ type: String, required: true })
-  password: string;
   @Prop({ type: Boolean, default: false })
-  isUsCitizen: boolean; // US citizenship status
-
-  @Prop({ type: Boolean, default: false })
-  isAuthorizedToWorkInUs: boolean; // US work authorization status
+  isAuthorizedToWorkInCountry: boolean;
 
   @Prop({ type: String })
   firstName: string;

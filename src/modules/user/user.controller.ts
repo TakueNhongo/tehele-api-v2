@@ -84,20 +84,6 @@ export class UserController {
   }
 
   @Public()
-  @Post('login')
-  @ApiOperation({ summary: 'Login and get OTP' })
-  async login(@Body() loginUserDto: LoginUserDto) {
-    return this.userService.login(loginUserDto);
-  }
-
-  @Public()
-  @Post('reauth')
-  @ApiOperation({ summary: 'Re-authenticate user' })
-  async reAuthenticate(@Body() reAuthDto: ReAuthDto) {
-    return this.userService.reAuthenticate(reAuthDto);
-  }
-
-  @Public()
   @Get('verify-email')
   @ApiOperation({ summary: 'Verify email with token' })
   async verifyEmail(@Query() verifyEmailDto: VerifyEmailDto) {
@@ -115,13 +101,6 @@ export class UserController {
   @ApiOperation({ summary: 'Request password reset email' })
   async requestPasswordReset(@Body() requestDto: RequestPasswordResetDto) {
     return this.userService.requestPasswordReset(requestDto.email);
-  }
-
-  @Public()
-  @Post('reset-password')
-  @ApiOperation({ summary: 'Reset password with token' })
-  async resetPassword(@Body() resetDto: ResetPasswordDto) {
-    return this.userService.resetPassword(resetDto.token, resetDto.newPassword);
   }
 
   @Get('dashboard')
@@ -151,23 +130,5 @@ export class UserController {
   async logout(@Req() req) {
     const sessionId = req.user.sessionId;
     return this.userService.logout(sessionId);
-  }
-
-  @Put('update-profile')
-  @ApiOperation({ summary: 'Update user profile' })
-  async updateProfile(
-    @Req() req: RequestWithUser,
-    @Body() updateUserProfileDto: UpdateUserDto,
-  ) {
-    const userId = req.user._id;
-    if (updateUserProfileDto.newPassword) {
-      return this.userService.updatePassword(
-        userId,
-        updateUserProfileDto.currentPassword,
-        updateUserProfileDto.newPassword,
-      );
-    } else {
-      return this.userService.updateProfile(userId, updateUserProfileDto);
-    }
   }
 }

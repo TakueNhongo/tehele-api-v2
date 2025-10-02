@@ -30,16 +30,10 @@ export class CreateUserDto {
   @IsNotEmpty()
   lastName: string;
 
-
-
-  @ApiProperty({ example: true, description: 'Whether the user is a US citizen' })
+  @ApiProperty({
+    example: true,
+    description: 'Whether the user is authorized to work in the country',
+  })
   @IsOptional()
-  isUSCitizen?: boolean;
-
-  @ApiProperty({ example: true, description: 'Whether the user is authorized to work in the USA' })
-  @IsOptional() 
-  isAuthorizedToWorkInUSA?: boolean;
-  
-
-
+  isAuthorizedToWorkInCountry?: boolean;
 }

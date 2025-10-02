@@ -39,6 +39,9 @@ COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./package.json
 
+# Copy public assets if they exist
+COPY --from=builder /app/public ./public
+
 # Change ownership to the nestjs user
 RUN chown -R nestjs:nodejs /app
 USER nestjs

@@ -19,13 +19,7 @@ import { InvestorModule } from '../investor/investor.module';
         name: User.name,
         useFactory: () => {
           const schema = UserSchema;
-          schema.pre('save', async function (next) {
-            if (this.isModified('password')) {
-              const salt = await bcrypt.genSalt();
-              this.password = await bcrypt.hash(this.password, salt);
-            }
-            next();
-          });
+
           schema.set('toJSON', {
             transform: (doc, ret) => {
               delete ret.__v;

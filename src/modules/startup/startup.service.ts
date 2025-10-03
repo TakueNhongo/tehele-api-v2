@@ -34,6 +34,7 @@ import { UpdatePerformanceDto } from './dto/update-performance.dto';
 import { PerformanceHistoryStatusEnum } from './enums/startup.enums';
 import { TeamMemberService } from '../team-member/team-member.service';
 import { UserService } from '../user/user.service';
+import { FilesService } from '../files/files.service';
 
 @Injectable()
 export class StartupService {
@@ -57,6 +58,8 @@ export class StartupService {
     private readonly teamMemberService: TeamMemberService,
     @Inject(forwardRef(() => UserService))
     private readonly userService: UserService,
+    @Inject(forwardRef(() => FilesService))
+    private readonly filesService: FilesService,
   ) {}
 
   async createStartup(
@@ -407,6 +410,224 @@ Important guidelines:
       console.error('Error generating market research:', error.message);
       throw error;
     }
+  }
+
+  async generateFundingReadiness(startupId: string) {
+    const startupData = await this.startupModel.findById(startupId).lean();
+
+    try {
+      // Step 1: Analyze pitch deck with Gemini if it exists
+      let pitchDeckAnalysis = null;
+      if (startupData.pitchDeckFileId) {
+        try {
+          const pitchDeckStream = await this.filesService.fetchFile(
+            startupData.pitchDeckFileId,
+          );
+          const pitchDeckBase64 = await this.convertStreamToBase64(
+            pitchDeckStream.stream,
+          );
+
+          pitchDeckAnalysis = await this.analyzePitchDeckWithGemini(
+            pitchDeckBase64,
+            startupData,
+          );
+        } catch (error) {
+          console.log('Pitch deck not found or error fetching:', error.message);
+        }
+      }
+
+      // Step 2: Use OpenAI for readiness assessment with pitch deck analysis
+      const openai = new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY,
+      });
+
+      const prompt = `
+You are an AI startup advisor specializing in funding readiness analysis.
+
+Given the following startup data and pitch deck analysis, analyze their readiness to meet investors and provide specific recommendations.
+
+STARTUP DATA:
+${JSON.stringify(startupData, null, 2)}
+
+${
+  pitchDeckAnalysis
+    ? `
+PITCH DECK ANALYSIS:
+${JSON.stringify(pitchDeckAnalysis, null, 2)}
+`
+    : `
+PITCH DECK: No pitch deck uploaded
+`
+}
+
+Respond strictly using this exact JSON schema:
+{
+  "overallScore": Number - Overall readiness score (0-100),
+  "readinessStatus": String - Must be one of: "ready", "not_ready", "almost_ready",
+  "summary": String - Detailed 6-8 sentence comprehensive summary of the funding readiness assessment,
+  "categoryScores": {
+    "financials": Number - Financial readiness score (0-100),
+    "legal": Number - Legal readiness score (0-100),
+    "pitchDeck": Number - Pitch deck readiness score (0-100)
+  },
+  "missingRequirements": [
+    {
+      "category": String - Must be one of: "financials", "legal", "pitchDeck",
+      "requirement": String - Specific requirement that's missing,
+      "priority": String - Must be one of: "high", "medium", "low",
+      "suggestion": String - Specific guidance on what to do
+    }
+  ]
+}
+
+Important guidelines:
+1. Analyze the startup's current stage and funding goals
+2. Check for completeness in financials, legal, and pitch deck
+3. Use the pitch deck analysis to inform pitch deck scoring and recommendations
+4. CRITICAL: If the pitch deck analysis indicates low relevance (mismatch with startup profile), assign very low pitch deck scores (0-30) and include specific recommendations about pitch deck relevance
+5. Focus on what's missing rather than what's working
+6. All scores should be realistic based on the data provided
+7. The summary should be detailed and comprehensive (6-8 sentences) covering: overall readiness status, key strengths, team assessment, main weaknesses, pitch deck quality assessment, financial readiness, specific areas needing improvement, and clear next steps for improvement
+8. Ensure the response is complete, valid JSON with no missing fields
+`;
+
+      const completion = await openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [
+          {
+            role: 'system',
+            content:
+              'You are a startup funding readiness advisor. Always respond with valid JSON exactly matching the provided schema.',
+          },
+          { role: 'user', content: prompt },
+        ],
+        response_format: { type: 'json_object' },
+      });
+
+      const response = JSON.parse(completion.choices[0].message.content);
+
+      // Add pitch deck analysis to response if available
+      if (pitchDeckAnalysis) {
+        response.pitchDeckAnalysis = pitchDeckAnalysis;
+      }
+
+      return response;
+    } catch (error) {
+      console.error('Error generating funding readiness:', error.message);
+      throw error;
+    }
+  }
+
+  // New method to analyze pitch deck with Gemini
+  private async analyzePitchDeckWithGemini(
+    pitchDeckBase64: string,
+    startupData: any,
+  ) {
+    try {
+      const geminiApiKey = process.env.GOOGLE_API_KEY;
+      if (!geminiApiKey) {
+        throw new Error('Google API key not found');
+      }
+
+      const prompt = `
+Analyze this startup pitch deck and provide a comprehensive assessment focusing on:
+
+1. **Relevance Check**: CRITICAL - Compare the pitch deck content with the startup profile data provided. Assess if the pitch deck accurately represents this specific startup's:
+   - Company name and description
+   - Industry and business model
+   - Team members and roles
+   - Market focus and target customers
+   - Financial data and metrics
+   - Stage and funding requirements
+
+2. **Relevance Score**: Provide a relevance score (0-100) indicating how well the pitch deck matches the startup profile. If the pitch deck appears to be for a different company, industry, or stage, give a very low score (0-30).
+
+3. **Strengths**: What the pitch deck does well (only if relevant to the startup)
+4. **Issues**: Problems or missing elements
+5. **Summary**: Brief overview of the pitch deck content
+6. **Key Metrics**: Important numbers and data points mentioned
+7. **Market Analysis**: How well the market opportunity is presented
+8. **Financial Projections**: Quality and completeness of financial data
+9. **Team Strength**: Assess the team's strength including:
+   - Relevant experience and expertise
+   - Track record and achievements
+   - Complementary skills and roles
+   - Leadership capabilities
+   - Industry knowledge and connections
+10. **Competitive Positioning**: How competitors are addressed
+11. **Call to Action**: Clarity of what the startup is asking for
+
+STARTUP PROFILE DATA:
+${JSON.stringify(startupData, null, 2)}
+
+IMPORTANT: If the pitch deck is not relevant to this startup profile, recommend a very low readiness score (0-30) and clearly state the mismatch. The pitch deck must accurately represent this specific startup's business, team, and goals.
+
+Provide a detailed analysis that can be used for funding readiness assessment.
+`;
+
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            contents: [
+              {
+                parts: [
+                  {
+                    inline_data: {
+                      mime_type: 'application/pdf',
+                      data: pitchDeckBase64,
+                    },
+                  },
+                  {
+                    text: prompt,
+                  },
+                ],
+              },
+            ],
+            generationConfig: {
+              thinkingConfig: {
+                thinkingBudget: 128,
+              },
+            },
+          }),
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error(`Gemini API error: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      const analysis = result.candidates?.[0]?.content?.parts?.[0]?.text;
+
+      if (!analysis) {
+        throw new Error('No analysis returned from Gemini');
+      }
+
+      console.log('Pitch Deck Analysis from Gemini:', analysis);
+      return analysis;
+    } catch (error) {
+      console.error('Error analyzing pitch deck with Gemini:', error.message);
+      throw error;
+    }
+  }
+
+  // Helper method to convert GridFS stream to base64
+  private async convertStreamToBase64(stream: any): Promise<string> {
+    const chunks: Buffer[] = [];
+
+    return new Promise((resolve, reject) => {
+      stream.on('data', (chunk: Buffer) => chunks.push(chunk));
+      stream.on('end', () => {
+        const buffer = Buffer.concat(chunks);
+        resolve(buffer.toString('base64'));
+      });
+      stream.on('error', reject);
+    });
   }
 
   async submitPerformanceChange(

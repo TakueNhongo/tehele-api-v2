@@ -8,14 +8,15 @@ import {
   Param,
   Query,
   UseGuards,
+  Req,
 } from '@nestjs/common';
 import { DocumentsService } from './documents.service';
 import { CreateDocumentDto } from './dto/create-document.dto';
 import { UpdateDocumentDto } from './dto/update-document.dto';
 import { DocumentFiltersDto } from './dto/document-filters.dto';
-import { CreateCategoryDto } from './dto/create-category.dto';
 import { Public } from '../../decorators/public.decorator';
 import { JwtAuthGuard } from '../../guards/jwt-auth.guard';
+import { RequestWithUser } from 'src/types/requests.type';
 
 @Controller('documents')
 export class DocumentsController {
@@ -26,12 +27,6 @@ export class DocumentsController {
   @Get()
   async getDocuments(@Query() filters: DocumentFiltersDto) {
     return this.documentsService.getDocuments(filters);
-  }
-
-  @Public()
-  @Get('categories')
-  async getCategories() {
-    return this.documentsService.getCategories();
   }
 
   @Public()
@@ -46,24 +41,34 @@ export class DocumentsController {
     return this.documentsService.getDocumentById(id);
   }
 
-  @Public()
-  @Get(':id/view')
-  async viewDocument(@Param('id') id: string) {
-    await this.documentsService.incrementViewCount(id);
-    return this.documentsService.getDocumentById(id);
+  @Get(':id/ai-guidance')
+  async getAIGuidance(
+    @Param('id') id: string,
+    @Query('stage') stage?: string,
+    @Req() req?: RequestWithUser,
+  ) {
+    const profileId = req?.profileId?.toString();
+    return this.documentsService.getAIGuidance(id, profileId, stage);
   }
 
-  // Public endpoints for document and category creation
+  // Public endpoints for document creation
   @Public()
   @Post()
   async createDocument(@Body() createDto: CreateDocumentDto) {
     return this.documentsService.createDocument(createDto);
   }
 
+  // Test routes for bulk data creation
   @Public()
-  @Post('categories')
-  async createCategory(@Body() createCategoryDto: CreateCategoryDto) {
-    return this.documentsService.createCategory(createCategoryDto);
+  @Post('test/bulk-create')
+  async createBulkTestData() {
+    return this.documentsService.createBulkTestData();
+  }
+
+  @Public()
+  @Delete('test/clear')
+  async clearTestData() {
+    return this.documentsService.clearTestData();
   }
 
   // Admin endpoints (protected)

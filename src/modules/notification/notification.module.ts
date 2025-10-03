@@ -6,12 +6,14 @@ import {
   Notification,
   NotificationSchema,
 } from './schemas/notification.schema';
+import { User, UserSchema } from '../user/schemas/user.schema';
 import { WebSocketModule } from '../websocket/websocket.module';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
       { name: Notification.name, schema: NotificationSchema },
+      { name: User.name, schema: UserSchema },
     ]),
     WebSocketModule,
   ],

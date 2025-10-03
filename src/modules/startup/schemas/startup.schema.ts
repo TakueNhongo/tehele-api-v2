@@ -158,14 +158,17 @@ export class Startup {
   @Prop({ type: String })
   marketOpportunity?: string;
 
-  @Prop({ enum: BusinessStructureEnum })
-  businessStructure?: BusinessStructureEnum;
+  @Prop({ type: String })
+  businessStructure?: string;
 
   @Prop({ type: String })
   pitchDeckFileId?: string;
 
   @Prop({ type: String })
   logoFileId?: string;
+
+  @Prop({ type: [String], default: [] })
+  dueDiligenceFileIds?: string[];
 
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   createdBy: Types.ObjectId;

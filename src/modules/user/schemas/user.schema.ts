@@ -62,6 +62,9 @@ export class User {
 
   @Prop({ type: [Types.ObjectId], ref: 'Investor', default: [] })
   investorProfileIds: Types.ObjectId[]; // References to investor profiles
+
+  @Prop({ type: [String], default: [], maxlength: 2 })
+  pushTokens: string[]; // Firebase push notification tokens (max 2)
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

@@ -27,6 +27,8 @@ import { StartupService } from '../startup/startup.service';
 import { InvestorService } from '../investor/investor.service';
 import { ConnectionInitiationMethodEnum } from '../connection/enums/connection.enums';
 import { WebSocketService } from '../websocket/websocket.service';
+import { NotificationService } from '../notification/notification.service';
+import { NotificationSeverityEnum } from '../notification/schemas/notification.schema';
 
 @Injectable()
 export class MessageService {
@@ -39,6 +41,7 @@ export class MessageService {
     private readonly investorService: InvestorService,
     private readonly connectionService: ConnectionService,
     private readonly likeService: LikeService,
+    private readonly notificationService: NotificationService,
   ) {}
 
   private generateThreadId(
@@ -479,6 +482,33 @@ export class MessageService {
       );
       // Create and return message
       const result = await this.messageModel.create(messageData);
+
+      // Create notification for the recipient
+      try {
+        const notificationMessage = shouldBePending
+          ? `New message request from ${senderProfileType === 'startup' ? 'a startup' : 'an investor'}`
+          : `New message from ${senderProfileType === 'startup' ? 'a startup' : 'an investor'}`;
+
+        await this.notificationService.createNotification(
+          receiverProfileType === 'startup'
+            ? new Types.ObjectId(createMessageDto.receiverStartupProfileId)
+            : undefined,
+          receiverProfileType === 'investor'
+            ? new Types.ObjectId(createMessageDto.receiverInvestorProfileId)
+            : undefined,
+          notificationMessage,
+          shouldBePending
+            ? NotificationSeverityEnum.NEUTRAL
+            : NotificationSeverityEnum.NEUTRAL,
+        );
+      } catch (notificationError) {
+        console.error(
+          'Failed to create notification for message:',
+          notificationError,
+        );
+        // Don't throw error here as message was already created successfully
+      }
+
       return result;
     } catch (e) {
       console.log('Error', e.message);
@@ -577,6 +607,24 @@ export class MessageService {
           status: MessageStatusEnum.SENT,
         },
       );
+
+      // Create notification for the sender when their message is accepted
+      try {
+        const senderNotificationMessage = `Your message request has been accepted by ${profileType === 'startup' ? 'the startup' : 'the investor'}`;
+
+        await this.notificationService.createNotification(
+          message.senderStartupProfileId || undefined,
+          message.senderInvestorProfileId || undefined,
+          senderNotificationMessage,
+          NotificationSeverityEnum.SUCCESS,
+        );
+      } catch (notificationError) {
+        console.error(
+          'Failed to create notification for accepted message:',
+          notificationError,
+        );
+        // Don't throw error here as message status was already updated successfully
+      }
     }
 
     return message.save();

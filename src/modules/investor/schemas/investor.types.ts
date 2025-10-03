@@ -9,10 +9,8 @@ export enum InvestmentStageEnum {
 
 export enum InvestmentTypeEnum {
   EQUITY = 'Equity',
-  CONVERTIBLE_NOTE = 'Convertible Note',
+  LOAN = 'Loan',
   SAFE = 'SAFE',
-  DEBT = 'Debt',
-  OTHER = 'Other',
 }
 
 export enum InvolvementLevelEnum {
@@ -21,6 +19,12 @@ export enum InvolvementLevelEnum {
   PASSIVE = 'Passive',
   HANDS_ON = 'Hands-on',
   OTHER = 'Other',
+}
+
+export enum InvestmentLevelEnum {
+  EQUITY = 'Equity',
+  LOAN = 'Loan',
+  SAFE = 'SAFE',
 }
 
 export interface InvestmentPreference {

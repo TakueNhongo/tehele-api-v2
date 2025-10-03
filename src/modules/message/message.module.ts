@@ -12,6 +12,7 @@ import { LikeModule } from '../like/like.module';
 import { StartupModule } from '../startup/startup.module';
 import { InvestorModule } from '../investor/investor.module';
 import { WebSocketModule } from '../websocket/websocket.module';
+import { NotificationModule } from '../notification/notification.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { WebSocketModule } from '../websocket/websocket.module';
     StartupModule,
     InvestorModule,
     WebSocketModule,
+    NotificationModule,
   ],
   controllers: [MessageController],
   providers: [MessageService],

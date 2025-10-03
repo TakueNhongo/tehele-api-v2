@@ -62,8 +62,6 @@ export class UserService {
     return token;
   }
 
-  
-
   async verifyEmail(token: string): Promise<any> {
     try {
       // Verify and decode the JWT token
@@ -306,8 +304,6 @@ export class UserService {
     }
   }
 
- 
-
   async resendVerification(userId: string) {
     const user = await this.userModel.findById(userId);
 
@@ -348,8 +344,6 @@ export class UserService {
     };
   }
 
-  
-
   async sendOTP(email: string): Promise<any> {
     const user = await this.userModel.findOne({
       email: email.toLowerCase(),
@@ -378,8 +372,6 @@ export class UserService {
 
     return { message: 'OTP sent to email' };
   }
-
- 
 
   async verifyOtp(verifyOtpDto: VerifyOtpDto): Promise<any> {
     const user = await this.userModel.findOne({ email: verifyOtpDto.email });
@@ -564,6 +556,34 @@ export class UserService {
       throw new InternalServerErrorException(
         'Failed to update user investor profile',
       );
+    }
+  }
+
+  async addPushToken(userId: Types.ObjectId, pushToken: string): Promise<User> {
+    try {
+      const user = await this.userModel.findById(userId);
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+
+      // Remove the token if it already exists to avoid duplicates
+      user.pushTokens = user.pushTokens.filter((token) => token !== pushToken);
+
+      // Add the new token at the beginning
+      user.pushTokens.unshift(pushToken);
+
+      // Keep only the latest 2 tokens
+      if (user.pushTokens.length > 2) {
+        user.pushTokens = user.pushTokens.slice(0, 2);
+      }
+
+      await user.save();
+      return user;
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Error updating push token');
     }
   }
 

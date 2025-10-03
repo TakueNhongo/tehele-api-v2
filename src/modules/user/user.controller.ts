@@ -131,4 +131,13 @@ export class UserController {
     const sessionId = req.user.sessionId;
     return this.userService.logout(sessionId);
   }
+
+  @Post('push-token')
+  @ApiOperation({ summary: 'Add or update push notification token' })
+  async addPushToken(
+    @Req() req: RequestWithUser,
+    @Body() body: { pushToken: string },
+  ) {
+    return this.userService.addPushToken(req.user._id, body.pushToken);
+  }
 }

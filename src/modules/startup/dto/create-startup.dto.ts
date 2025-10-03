@@ -6,10 +6,6 @@ import {
   IsArray,
   IsEnum,
 } from 'class-validator';
-import {
-  FundingStageEnum,
-  BusinessStructureEnum,
-} from '../enums/startup.enums';
 import { TeamMember } from '../types/startup.types';
 import { FinancialRecordType } from '../schemas/startup.schema';
 
@@ -67,10 +63,9 @@ export class CreateStartupDto {
   @IsArray()
   team?: TeamMember[];
 
-  @ApiProperty({ enum: FundingStageEnum, required: false })
-  @IsOptional()
-  @IsEnum(FundingStageEnum)
-  fundingStage?: FundingStageEnum;
+  @ApiProperty({ required: true })
+  @IsString()
+  fundingStage: string;
 
   @ApiProperty({ type: [Object], required: false })
   @IsOptional()
@@ -116,10 +111,10 @@ export class CreateStartupDto {
   @IsNumber()
   equityOffering?: number;
 
-  @ApiProperty({ enum: BusinessStructureEnum, required: false })
+  @ApiProperty({ required: false })
   @IsOptional()
-  @IsEnum(BusinessStructureEnum)
-  businessStructure?: BusinessStructureEnum;
+  @IsString()
+  businessStructure?: string;
 
   @ApiProperty({ required: false })
   @IsOptional()
@@ -130,4 +125,10 @@ export class CreateStartupDto {
   @IsOptional()
   @IsString()
   logoFileId?: string;
+
+  @ApiProperty({ required: false, type: [String] })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  dueDiligenceFileIds?: string[];
 }

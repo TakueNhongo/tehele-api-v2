@@ -11,6 +11,7 @@ import {
 } from '@nestjs/common';
 import { NotificationService } from './notification.service';
 import { NotificationSeverityEnum } from './schemas/notification.schema';
+import { Public } from 'src/decorators/public.decorator';
 
 import { Types } from 'mongoose';
 import { RequestWithUser } from 'src/types/requests.type';
@@ -50,5 +51,24 @@ export class NotificationController {
   @Delete(':id')
   async deleteNotification(@Param('id') id: string) {
     return this.notificationService.deleteNotification(new Types.ObjectId(id));
+  }
+
+  @Public()
+  @Post('test')
+  async createTestNotification(
+    @Body()
+    body: {
+      startupId?: string;
+      investorId?: string;
+      message?: string;
+      severity?: NotificationSeverityEnum;
+    },
+  ) {
+    return this.notificationService.createTestNotification(
+      body.startupId ? new Types.ObjectId(body.startupId) : undefined,
+      body.investorId ? new Types.ObjectId(body.investorId) : undefined,
+      body.message || 'This is a test notification',
+      body.severity || NotificationSeverityEnum.NEUTRAL,
+    );
   }
 }

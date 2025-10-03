@@ -19,6 +19,7 @@ import {
 import { StartupViewHistoryService } from './services/startup-view-history.service';
 import { TeamMemberModule } from '../team-member/team-member.module';
 import { UserModule } from '../user/user.module';
+import { FilesModule } from '../files/files.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { UserModule } from '../user/user.module';
     forwardRef(() => ConnectionModule),
     forwardRef(() => TeamMemberModule),
     forwardRef(() => UserModule),
+    forwardRef(() => FilesModule),
     MongooseModule.forFeature([
       { name: Startup.name, schema: StartupSchema },
       { name: Message.name, schema: MessageSchema },

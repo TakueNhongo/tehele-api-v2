@@ -76,6 +76,12 @@ export class StartupController {
     return this.startupService.generateMarketResearch(id);
   }
 
+  @Public()
+  @Get(':id/insights/readiness')
+  async getFundingReadiness(@Param('id') id: string) {
+    return this.startupService.generateFundingReadiness(id);
+  }
+
   @Get(':id')
   @Public()
   async getStartup(@Param('id') id: string, @Req() req: RequestWithUser) {

@@ -3,6 +3,7 @@ import { HydratedDocument, Types } from 'mongoose';
 import {
   InvestmentTypeEnum,
   InvolvementLevelEnum,
+  InvestmentLevelEnum,
   InvestmentPreference,
 } from './investor.types';
 

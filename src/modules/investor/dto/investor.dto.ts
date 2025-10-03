@@ -14,6 +14,7 @@ import {
   InvestmentStageEnum,
   InvestmentTypeEnum,
   InvolvementLevelEnum,
+  InvestmentLevelEnum,
 } from '../schemas/investor.types';
 
 // Investment Preference DTO

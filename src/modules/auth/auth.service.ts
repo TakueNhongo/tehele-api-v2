@@ -34,34 +34,22 @@ export class AuthService {
   async sendOTP(email: string): Promise<{ message: string }> {
     const normalizedEmail = email.toLowerCase();
 
-    // Check for rate limiting - max 3 OTP requests per email per 15 minutes
-    const recentOtps = await this.otpModel.countDocuments({
-      email: normalizedEmail,
-      createdAt: { $gte: new Date(Date.now() - 15 * 60 * 1000) },
-    });
-
-    if (recentOtps >= 20) {
-      throw new HttpException(
-        'Too many OTP requests. Please try again later.',
-        HttpStatus.TOO_MANY_REQUESTS,
-      );
-    }
-
     // Generate OTP
     const otp = crypto.randomInt(100000, 999999).toString();
     const hashedOtp = await bcrypt.hash(otp, 5);
 
     // Store OTP (delete any existing unused OTPs for this email)
-    await this.otpModel.deleteMany({
-      email: normalizedEmail,
-      isUsed: false,
-    });
-
-    await this.otpModel.create({
-      email: normalizedEmail,
-      otpCode: hashedOtp,
-      expiresAt: new Date(Date.now() + 5 * 60 * 1000), // 5 minutes
-    });
+    await Promise.all([
+      this.otpModel.deleteMany({
+        email: normalizedEmail,
+        isUsed: false,
+      }),
+      this.otpModel.create({
+        email: normalizedEmail,
+        otpCode: hashedOtp,
+        expiresAt: new Date(Date.now() + 5 * 60 * 1000), // 5 minutes
+      }),
+    ]);
 
     // Send OTP email (always send, regardless of whether user exists)
     try {

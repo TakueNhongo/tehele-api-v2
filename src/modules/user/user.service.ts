@@ -357,7 +357,7 @@ export class UserService {
     const otp = crypto.randomInt(100000, 999999).toString();
     user.otpCode = await bcrypt.hash(otp, 5);
     user.otpExpiresAt = new Date(Date.now() + 5 * 60 * 1000);
-    await user.save();
+    user.save().then(() => {}).catch(() => {});
 
     try {
       this.mailerService.sendMail({

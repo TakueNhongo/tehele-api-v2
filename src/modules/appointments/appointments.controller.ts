@@ -84,4 +84,27 @@ export class AppointmentsController {
       req.profileType === 'investor' ? req.profileId : undefined,
     );
   }
+
+  /**
+   * Create an expert access appointment request
+   */
+  @Post('expert-access')
+  @ApiOperation({ summary: 'Request expert access consultation' })
+  async createExpertAccess(
+    @Body() createAppointmentDto: {
+      date: Date;
+      timezone: string;
+      consultationType: string;
+      message: string;
+    },
+    @Req() req: RequestWithUser,
+  ) {
+    console.log('yo');
+    return this.appointmentsService.createExpertAccess(
+      createAppointmentDto,
+      req.user._id,
+      req.profileType === 'startup' ? req.profileId : undefined,
+      req.profileType === 'investor' ? req.profileId : undefined,
+    );
+  }
 }

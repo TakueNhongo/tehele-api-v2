@@ -28,7 +28,7 @@ export class InvestorService {
       // Create the investor profile
       const investor = await this.investorModel.create({
         ...dto,
-        createdBy: userId,
+        createdBy: new Types.ObjectId(userId),
       });
 
       // Update user's investor profile association

@@ -38,27 +38,31 @@ export class AuthService {
     const otp = crypto.randomInt(100000, 999999).toString();
     const hashedOtp = await bcrypt.hash(otp, 5);
 
-    // Store OTP (delete any existing unused OTPs for this email)
-    await Promise.all([
-      this.otpModel.deleteMany({
-        email: normalizedEmail,
-        isUsed: false,
-      }),
-      this.otpModel.create({
-        email: normalizedEmail,
-        otpCode: hashedOtp,
-        expiresAt: new Date(Date.now() + 5 * 60 * 1000), // 5 minutes
-      }),
-    ]);
-
+    // Store OTP (update existing or create new one for this email)
     // Send OTP email (always send, regardless of whether user exists)
     try {
-      await this.mailerService.sendMail({
-        to: normalizedEmail,
-        subject: 'Your Tehele Verification Code',
-        html: getOTPEmailTemplate(normalizedEmail, otp),
-        text: `Your OTP code is: ${otp}. This code will expire in 5 minutes.`,
-      });
+      await Promise.all([
+        this.otpModel.findOneAndUpdate(
+          {
+            email: normalizedEmail,
+          },
+          {
+            $set: {
+              otpCode: hashedOtp,
+              expiresAt: new Date(Date.now() + 5 * 60 * 1000), // 5 minutes
+              isUsed: false,
+              attempts: 0,
+            },
+          },
+          { upsert: true, new: true },
+        ),
+        this.mailerService.sendMail({
+          to: normalizedEmail,
+          subject: 'Your Tehele Verification Code',
+          html: getOTPEmailTemplate(normalizedEmail, otp),
+          text: `Your OTP code is: ${otp}. This code will expire in 5 minutes.`,
+        }),
+      ]);
     } catch (error) {
       console.error('Error sending OTP email:', error);
       // Don't throw error to avoid revealing email sending issues
@@ -79,13 +83,6 @@ export class AuthService {
 
     if (!otpRecord) {
       throw new BadRequestException('Invalid or expired OTP');
-    }
-
-    // Check max attempts
-    if (otpRecord.attempts >= otpRecord.maxAttempts) {
-      throw new BadRequestException(
-        'Too many failed attempts. Request a new OTP.',
-      );
     }
 
     // Verify OTP

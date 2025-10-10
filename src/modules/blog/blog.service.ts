@@ -94,4 +94,29 @@ export class BlogService {
   async getCategories() {
     return this.categoryModel.find();
   }
+
+  async getTopStartupsArticle() {
+    // First try to find an article specifically marked as top startups
+    let blog = await this.blogModel
+      .findOne({ isTopStartups: true })
+      .populate('author')
+      .populate('category')
+      .sort({ createdAt: -1 });
+
+    // If no top startups article found, fallback to any article
+    if (!blog) {
+      blog = await this.blogModel
+        .findOne()
+        .populate('author')
+        .populate('category')
+        .sort({ createdAt: -1 });
+    }
+
+    if (!blog) throw new NotFoundException('No blog posts found');
+
+    // Increment view count
+    await this.blogModel.findByIdAndUpdate(blog._id, { $inc: { views: 1 } });
+
+    return blog;
+  }
 }

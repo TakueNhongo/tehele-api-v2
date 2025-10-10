@@ -93,4 +93,11 @@ export class BlogController {
   async createCategory(@Body('name') name: string) {
     return this.blogService.createCategory(name);
   }
+
+  @Public()
+  @Get('top-startups')
+  @ApiOperation({ summary: 'Get top startups article with fallback' })
+  async getTopStartupsArticle() {
+    return this.blogService.getTopStartupsArticle();
+  }
 }

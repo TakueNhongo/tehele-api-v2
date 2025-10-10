@@ -22,6 +22,9 @@ export class Blog {
 
   @Prop({ type: Types.ObjectId, ref: 'Category' }) // Reference to category
   category: Types.ObjectId;
+
+  @Prop({ type: Boolean, default: false }) // Flag for top startups article
+  isTopStartups: boolean;
 }
 
 export const BlogSchema = SchemaFactory.createForClass(Blog);

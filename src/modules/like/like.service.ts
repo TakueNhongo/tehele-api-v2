@@ -63,7 +63,13 @@ export class LikeService {
         investorId,
         status: LikeStatusEnum.ACTIVE,
       })
-      .populate('startupId')
+      .populate({
+        path: 'startupId',
+        populate: {
+          path: 'team',
+          select: 'name role bio email isCreator isActive',
+        },
+      })
       .lean();
 
     return results.map((item) => {

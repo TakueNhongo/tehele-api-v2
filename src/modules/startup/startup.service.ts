@@ -477,8 +477,10 @@ Respond strictly using this exact JSON schema:
       "priority": String - Must be one of: "high", "medium", "low",
       "suggestion": String - Specific guidance on what to do
     }
-  ]
+  ] - Provide approximately 4 detailed missing requirements for each category that has gaps
 }
+
+
 
 Important guidelines:
 1. Analyze the startup's current stage and funding goals

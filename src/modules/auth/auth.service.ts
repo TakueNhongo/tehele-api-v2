@@ -275,4 +275,78 @@ export class AuthService {
       [profileType]: profile,
     };
   }
+
+  async verifyTestAccount(email: string): Promise<any> {
+    const normalizedEmail = email.toLowerCase();
+
+    // Define test account emails
+    const TEST_ACCOUNTS = ['mctaruk@gmail.com', 'takudzwanhongo6@gmail.com'];
+
+    // Check if this is a valid test account
+    if (!TEST_ACCOUNTS.includes(normalizedEmail)) {
+      throw new BadRequestException('Invalid test account email');
+    }
+
+    // Check if user exists
+    const user = await this.userModel.findOne({ email: normalizedEmail });
+
+    if (!user) {
+      // User doesn't exist - return indicator for registration
+      return {
+        userExists: false,
+        email: normalizedEmail,
+        message: 'Please complete registration',
+      };
+    }
+
+    // User exists - get all profiles for selection
+    let allStartups = [];
+    let allInvestors = [];
+
+    if (user.startupProfileIds && user.startupProfileIds.length > 0) {
+      allStartups = await Promise.all(
+        user.startupProfileIds.map((id) =>
+          this.startupService.getStartupByIdForAuth(id.toString()),
+        ),
+      );
+    }
+
+    if (user.investorProfileIds && user.investorProfileIds.length > 0) {
+      allInvestors = await Promise.all(
+        user.investorProfileIds.map((id) =>
+          this.investorService.getInvestorProfileForAuth(id),
+        ),
+      );
+    }
+
+    // Create session and generate token for existing user
+    const sessionId = await this.createSession(user);
+    const token = this.generateToken(user, sessionId);
+
+    // If user has profiles, return them for selection
+    if (allStartups.length > 0 || allInvestors.length > 0) {
+      return {
+        userExists: true,
+        user,
+        token,
+        profiles: {
+          startups: allStartups.filter((startup) => startup !== null),
+          investors: allInvestors.filter((investor) => investor !== null),
+        },
+        message: 'Select a profile to continue',
+      };
+    }
+
+    // User exists but has no profiles - they need to create one
+    return {
+      userExists: true,
+      user,
+      token,
+      profiles: {
+        startups: [],
+        investors: [],
+      },
+      message: 'Create your first profile',
+    };
+  }
 }

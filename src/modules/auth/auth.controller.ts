@@ -63,4 +63,14 @@ export class AuthController {
       activateProfileDto.profileId,
     );
   }
+
+  @Public()
+  @Post('verify-test-account')
+  @ApiOperation({
+    summary: 'Verify test account without OTP (for development/testing)',
+  })
+  async verifyTestAccount(@Body() { email }: { email: string }) {
+    console.log('verifyTestAccount', email);
+    return this.authService.verifyTestAccount(email);
+  }
 }

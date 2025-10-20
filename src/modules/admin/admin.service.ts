@@ -53,11 +53,12 @@ export class AdminService {
       this.eventModel.countDocuments({ startDate: { $gte: new Date() } }),
     ]);
 
+    //         pendingInvestorVerifications +
+
     return {
       investors: totalInvestors,
       startups: totalStartups,
-      pendingVerifications:
-        pendingInvestorVerifications + pendingStartupVerifications,
+      pendingVerifications: pendingStartupVerifications,
       upcomingEvents,
     };
   }
@@ -129,13 +130,14 @@ export class AdminService {
   }
 
   async getAllStartups() {
-    return this.startupModel.find().populate('createdBy');
+    return this.startupModel.find().populate('createdBy team');
   }
 
   async getStartupById(id: string) {
     const startup = await this.startupModel
       .findById(id)
-      .populate('createdBy', 'firstName lastName email');
+      .populate('createdBy', 'firstName lastName email')
+      .populate('team', 'name role bio email isCreator isActive');
     if (!startup) throw new NotFoundException('Startup not found');
     return startup;
   }
@@ -147,7 +149,8 @@ export class AdminService {
         { businessVerified: true, isRejected: false },
         { new: true },
       )
-      .populate('createdBy');
+      .populate('createdBy', 'firstName lastName email')
+      .populate('team', 'name role bio email isCreator isActive');
 
     if (!updatedStartup) throw new NotFoundException('Startup not found');
 

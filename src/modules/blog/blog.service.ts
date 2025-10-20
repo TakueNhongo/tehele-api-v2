@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Blog, BlogDocument } from './blog.schema';
@@ -92,7 +96,61 @@ export class BlogService {
   }
 
   async getCategories() {
-    return this.categoryModel.find();
+    return this.categoryModel.find().sort({ createdAt: -1 });
+  }
+
+  async updateCategory(id: string, name: string) {
+    const category = await this.categoryModel.findByIdAndUpdate(
+      id,
+      { name },
+      { new: true },
+    );
+    if (!category) throw new NotFoundException('Category not found');
+    return category;
+  }
+
+  async deleteCategory(id: string) {
+    // Check if category is being used by any blog posts
+    const blogsUsingCategory = await this.blogModel.countDocuments({
+      category: id,
+    });
+
+    if (blogsUsingCategory > 0) {
+      throw new BadRequestException(
+        'Cannot delete category that is being used by blog posts',
+      );
+    }
+
+    const category = await this.categoryModel.findByIdAndDelete(id);
+    if (!category) throw new NotFoundException('Category not found');
+    return { message: 'Category deleted successfully' };
+  }
+
+  async setTopStartupsArticle(id: string) {
+    // First, unset isTopStartups from all other blogs
+    await this.blogModel.updateMany(
+      { isTopStartups: true },
+      { isTopStartups: false },
+    );
+
+    // Then set it for the specified blog
+    const blog = await this.blogModel
+      .findByIdAndUpdate(id, { isTopStartups: true }, { new: true })
+      .populate('author')
+      .populate('category');
+
+    if (!blog) throw new NotFoundException('Blog post not found');
+    return blog;
+  }
+
+  async unsetTopStartupsArticle(id: string) {
+    const blog = await this.blogModel
+      .findByIdAndUpdate(id, { isTopStartups: false }, { new: true })
+      .populate('author')
+      .populate('category');
+
+    if (!blog) throw new NotFoundException('Blog post not found');
+    return blog;
   }
 
   async getTopStartupsArticle() {

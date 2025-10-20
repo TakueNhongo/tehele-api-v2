@@ -349,4 +349,110 @@ export class AuthService {
       message: 'Create your first profile',
     };
   }
+
+  async sendAdminOTP(email: string): Promise<{ message: string }> {
+    const normalizedEmail = email.toLowerCase();
+
+    // Check if user exists and is an admin
+    const user = await this.userModel.findOne({
+      email: normalizedEmail,
+      isAdmin: true,
+    });
+
+    if (!user) {
+      throw new UnauthorizedException(
+        'Admin account not found with this email',
+      );
+    }
+
+    // Generate OTP
+    const otp = crypto.randomInt(100000, 999999).toString();
+    const hashedOtp = await bcrypt.hash(otp, 5);
+
+    // Store OTP
+    try {
+      await this.otpModel.findOneAndUpdate(
+        {
+          email: normalizedEmail,
+        },
+        {
+          $set: {
+            otpCode: hashedOtp,
+            expiresAt: new Date(Date.now() + 5 * 60 * 1000), // 5 minutes
+            isUsed: false,
+            attempts: 0,
+          },
+        },
+        { upsert: true, new: true },
+      );
+
+      // Send OTP email
+      await this.mailerService.sendMail({
+        to: normalizedEmail,
+        subject: 'Admin Login - Tehele Verification Code',
+        html: getOTPEmailTemplate(normalizedEmail, otp),
+        text: `Your admin login OTP code is: ${otp}. This code will expire in 5 minutes.`,
+      });
+    } catch (error) {
+      console.error('Error sending admin OTP email:', error);
+    }
+
+    return { message: 'OTP sent to admin email' };
+  }
+
+  async verifyAdminOTP(email: string, otpCode: string): Promise<any> {
+    const normalizedEmail = email.toLowerCase();
+
+    // Find valid OTP
+    const otpRecord = await this.otpModel.findOne({
+      email: normalizedEmail,
+      isUsed: false,
+      expiresAt: { $gt: new Date() },
+    });
+
+    if (!otpRecord) {
+      throw new BadRequestException('Invalid or expired OTP');
+    }
+
+    // Verify OTP
+    const isValidOtp = await bcrypt.compare(otpCode, otpRecord.otpCode);
+
+    if (!isValidOtp) {
+      // Increment attempts
+      otpRecord.attempts += 1;
+      await otpRecord.save();
+      throw new BadRequestException('Invalid OTP');
+    }
+
+    // Mark OTP as used
+    otpRecord.isUsed = true;
+    await otpRecord.save();
+
+    // Check if user exists and is admin
+    const user = await this.userModel.findOne({
+      email: normalizedEmail,
+      isAdmin: true,
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('Admin account not found');
+    }
+
+    // Create session and generate token
+    const sessionId = await this.createSession(user);
+    const token = this.generateToken(user, sessionId);
+
+    return {
+      success: true,
+      user: {
+        _id: user._id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        isAdmin: user.isAdmin,
+      },
+      token,
+      message: 'Admin authenticated successfully',
+    };
+  }
 }

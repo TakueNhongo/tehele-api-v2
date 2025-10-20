@@ -144,7 +144,7 @@ export class AdminService {
     const updatedStartup = await this.startupModel
       .findByIdAndUpdate(
         id,
-        { isVerified: true, isRejected: false },
+        { businessVerified: true, isRejected: false },
         { new: true },
       )
       .populate('createdBy');

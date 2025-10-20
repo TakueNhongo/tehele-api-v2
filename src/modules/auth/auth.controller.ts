@@ -73,4 +73,23 @@ export class AuthController {
     console.log('verifyTestAccount', email);
     return this.authService.verifyTestAccount(email);
   }
+
+  @Public()
+  @Post('admin/send-otp')
+  @ApiOperation({ summary: 'Send OTP to admin email for authentication' })
+  async sendAdminOTP(@Body() sendOtpDto: SendOtpDto) {
+    return this.authService.sendAdminOTP(sendOtpDto.email);
+  }
+
+  @Public()
+  @Post('admin/verify-otp')
+  @ApiOperation({
+    summary: 'Verify admin OTP and authenticate',
+  })
+  async verifyAdminOTP(@Body() verifyOtpDto: VerifyOtpDto) {
+    return this.authService.verifyAdminOTP(
+      verifyOtpDto.email,
+      verifyOtpDto.otp,
+    );
+  }
 }

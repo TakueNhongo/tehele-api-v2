@@ -9,6 +9,7 @@ import {
   Query,
   Req,
   UseGuards,
+  Patch,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { BlogService } from './blog.service';
@@ -92,6 +93,30 @@ export class BlogController {
   @ApiOperation({ summary: 'Create a new category' })
   async createCategory(@Body('name') name: string) {
     return this.blogService.createCategory(name);
+  }
+
+  @Put('categories/:id')
+  @ApiOperation({ summary: 'Update a category' })
+  async updateCategory(@Param('id') id: string, @Body('name') name: string) {
+    return this.blogService.updateCategory(id, name);
+  }
+
+  @Delete('categories/:id')
+  @ApiOperation({ summary: 'Delete a category' })
+  async deleteCategory(@Param('id') id: string) {
+    return this.blogService.deleteCategory(id);
+  }
+
+  @Patch(':id/set-top-startups')
+  @ApiOperation({ summary: 'Set article as top startups article' })
+  async setTopStartupsArticle(@Param('id') id: string) {
+    return this.blogService.setTopStartupsArticle(id);
+  }
+
+  @Patch(':id/unset-top-startups')
+  @ApiOperation({ summary: 'Unset article as top startups article' })
+  async unsetTopStartupsArticle(@Param('id') id: string) {
+    return this.blogService.unsetTopStartupsArticle(id);
   }
 
   @Public()

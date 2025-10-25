@@ -455,4 +455,65 @@ export class AuthService {
       message: 'Admin authenticated successfully',
     };
   }
+
+  async getVerificationStatus(
+    profileType: string,
+    profileId: string,
+  ): Promise<any> {
+    if (!profileType || !profileId) {
+      throw new BadRequestException('Profile type and profile ID are required');
+    }
+
+    if (!['startup', 'investor'].includes(profileType)) {
+      throw new BadRequestException('Invalid profile type');
+    }
+
+    let currentProfile = null;
+
+    // Get the specific profile based on type and ID
+    if (profileType === 'startup') {
+      currentProfile =
+        await this.startupService.getStartupByIdForAuth(profileId);
+    } else if (profileType === 'investor') {
+      currentProfile = await this.investorService.getInvestorProfileForAuth(
+        new Types.ObjectId(profileId),
+      );
+    }
+
+    if (!currentProfile) {
+      return {
+        hasProfile: false,
+        message: 'Profile not found',
+      };
+    }
+
+    // Determine verification status based on profile type
+    let isVerified = false;
+    let isRejected = false;
+    let isPending = false;
+
+    if (profileType === 'startup') {
+      isVerified = currentProfile.businessVerified === true;
+      isRejected = currentProfile.isRejected === true;
+      isPending = !isVerified && !isRejected;
+    } else if (profileType === 'investor') {
+      isVerified = currentProfile.isVerified === true;
+      isRejected = currentProfile.isRejected === true;
+      isPending = !isVerified && !isRejected;
+    }
+
+    return {
+      hasProfile: true,
+      profileType,
+      profile: currentProfile,
+      isVerified,
+      isRejected,
+      isPending,
+      verificationStatus: isVerified
+        ? 'verified'
+        : isRejected
+          ? 'rejected'
+          : 'pending',
+    };
+  }
 }

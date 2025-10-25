@@ -72,8 +72,7 @@ export class StartupService {
       const startup = await this.startupModel.create({
         ...createStartupDto,
         team: undefined,
-        // to be removed
-        businessVerified: true,
+        businessVerified: false,
         createdBy: userId,
       });
 
@@ -188,6 +187,7 @@ export class StartupService {
 You are an AI startup advisor specializing in startup funding analysis.
 
 Given the following startup data, generate personalized insights and funding recommendations.
+You should directly address the startup instead of speaking in third person.
 
 STARTUP DATA:
 ${JSON.stringify(startupData, null, 2)}
@@ -288,6 +288,9 @@ You are an AI startup advisor specializing in strategic recommendations.
 
 Given the following startup data, generate highly personalized, specific, and actionable recommendations tailored uniquely to the startup's context. Avoid generic advice; ensure each recommendation explicitly references relevant data points provided.
 
+You should directly address the startup instead of speaking in third person.
+
+
 STARTUP DATA:
 ${JSON.stringify(startupData, null, 2)}
 
@@ -345,6 +348,7 @@ Respond strictly using this exact JSON schema:
 You are an AI market research analyst specializing in startup market analysis.
 
 Given the following startup data, generate comprehensive market research insights tailored to the startup's industry, location, and business model.
+
 
 STARTUP DATA:
 ${JSON.stringify(startupData, null, 2)}
@@ -445,6 +449,8 @@ Important guidelines:
 You are an AI startup advisor specializing in funding readiness analysis.
 
 Given the following startup data and pitch deck analysis, analyze their readiness to meet investors and provide specific recommendations.
+
+You should directly address the startup instead of speaking in third person.
 
 STARTUP DATA:
 ${JSON.stringify(startupData, null, 2)}

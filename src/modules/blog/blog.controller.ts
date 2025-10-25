@@ -29,6 +29,8 @@ export class BlogController {
     @Body('content') content: string,
     @Body('coverPhotoId') coverPhotoId: string,
     @Body('category') category: string,
+    @Body('targetProfileType')
+    targetProfileType: 'startup' | 'investor' | 'all' = 'all',
   ) {
     return this.blogService.createBlog(
       title,
@@ -36,18 +38,26 @@ export class BlogController {
       coverPhotoId,
       req.user._id,
       category,
+      targetProfileType,
     );
   }
 
   @Get()
   @ApiOperation({ summary: 'Fetch blog posts' })
   async getBlogs(
+    @Req() req: RequestWithUser,
     @Query('search') search?: string,
     @Query('category') category?: string,
     @Query('page') page = 1,
     @Query('perPage') perPage = 100,
   ) {
-    return this.blogService.getBlogs(search, category, page, perPage);
+    return this.blogService.getBlogs(
+      search,
+      category,
+      page,
+      perPage,
+      req.profileType,
+    );
   }
 
   @Public()
@@ -55,6 +65,14 @@ export class BlogController {
   @ApiOperation({ summary: 'Fetch blog categories' })
   async getCategories() {
     return this.blogService.getCategories();
+  }
+
+  @Public()
+  @Get('top-startups')
+  @ApiOperation({ summary: 'Get top startups article with fallback' })
+  async getTopStartupsArticle() {
+    console.log('Seeking');
+    return this.blogService.getTopStartupsArticle();
   }
 
   @Get(':id')
@@ -117,12 +135,5 @@ export class BlogController {
   @ApiOperation({ summary: 'Unset article as top startups article' })
   async unsetTopStartupsArticle(@Param('id') id: string) {
     return this.blogService.unsetTopStartupsArticle(id);
-  }
-
-  @Public()
-  @Get('top-startups')
-  @ApiOperation({ summary: 'Get top startups article with fallback' })
-  async getTopStartupsArticle() {
-    return this.blogService.getTopStartupsArticle();
   }
 }

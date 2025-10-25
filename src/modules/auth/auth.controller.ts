@@ -1,9 +1,10 @@
-import { Controller, Post, Body } from '@nestjs/common';
+import { Controller, Post, Body, Get, UseGuards, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { Public } from 'src/decorators/public.decorator';
 import { SendOtpDto } from './dto/send-otp.dto';
 import { VerifyOtpDto } from '../user/dto/verify-otp.dto';
+import { JwtAuthGuard } from '../../guards/jwt-auth.guard';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -91,5 +92,16 @@ export class AuthController {
       verifyOtpDto.email,
       verifyOtpDto.otp,
     );
+  }
+
+  @Get('verification-status')
+  @ApiOperation({
+    summary: 'Get current user verification status',
+  })
+  async getVerificationStatus(
+    @Query('profileType') profileType: string,
+    @Query('profileId') profileId: string,
+  ) {
+    return this.authService.getVerificationStatus(profileType, profileId);
   }
 }

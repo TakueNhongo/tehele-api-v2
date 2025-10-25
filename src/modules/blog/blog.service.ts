@@ -21,6 +21,7 @@ export class BlogService {
     coverPhotoId: string,
     author: Types.ObjectId,
     category: string,
+    targetProfileType: 'startup' | 'investor' | 'all' = 'all',
   ) {
     const blog = new this.blogModel({
       title,
@@ -28,15 +29,29 @@ export class BlogService {
       coverPhotoId,
       author,
       category: new Types.ObjectId(category),
+      targetProfileType,
     });
     return blog.save();
   }
 
-  async getBlogs(search?: string, category?: string, page = 1, perPage = 100) {
-    const filter: any = {};
+  async getBlogs(
+    search?: string,
+    category?: string,
+    page = 1,
+    perPage = 100,
+    profileType?: 'startup' | 'investor',
+  ) {
+    const filter: any = {
+      isTopStartups: false,
+    };
 
     if (search) filter.title = { $regex: search, $options: 'i' };
     if (category) filter.category = new Types.ObjectId(category);
+
+    // If profileType is provided, filter blogs to targetProfileType of that type or 'all'
+    if (profileType) {
+      filter.targetProfileType = { $in: [profileType, 'all'] };
+    }
 
     const blogs = await this.blogModel
       .find(filter)
@@ -171,9 +186,6 @@ export class BlogService {
     }
 
     if (!blog) throw new NotFoundException('No blog posts found');
-
-    // Increment view count
-    await this.blogModel.findByIdAndUpdate(blog._id, { $inc: { views: 1 } });
 
     return blog;
   }

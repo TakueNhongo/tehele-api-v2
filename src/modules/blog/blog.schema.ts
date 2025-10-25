@@ -11,6 +11,10 @@ export class Blog {
   @Prop({ required: true, type: String })
   content: string;
 
+
+  @Prop({ type: String, enum: ['startup', 'investor', 'all'], default: 'all' })
+  targetProfileType: 'startup' | 'investor' | 'all';
+
   @Prop({ required: true, type: Types.ObjectId, ref: 'User' })
   author: Types.ObjectId;
 

@@ -16,6 +16,8 @@ export enum CompanyStage {
   SEED = 'seed',
   SERIES_A = 'series_a',
   SERIES_B_PLUS = 'series_b_plus',
+  TECH = 'tech',
+  ALL_STAGES = 'all_stages',
 }
 
 @Schema({ timestamps: true })

@@ -1,5 +1,5 @@
 import { IsString, IsEnum, IsOptional, IsNotEmpty } from 'class-validator';
-import { DocumentCategoryEnum } from '../schemas/document.schema';
+import { DocumentCategoryEnum, CompanyStage } from '../schemas/document.schema';
 
 export class CreateDocumentDto {
   @IsString()
@@ -13,6 +13,9 @@ export class CreateDocumentDto {
   @IsEnum(DocumentCategoryEnum)
   category: DocumentCategoryEnum;
 
+  @IsEnum(CompanyStage)
+  companyStage: CompanyStage;
+
   @IsString()
   @IsOptional()
   fileId?: string;
@@ -20,4 +23,8 @@ export class CreateDocumentDto {
   @IsString()
   @IsOptional()
   url?: string;
+
+  @IsString()
+  @IsOptional()
+  coverImageId?: string;
 }

@@ -40,7 +40,13 @@ export class DocumentsService {
     page: number;
     limit: number;
   }> {
-    const { category, search, page = '1', limit = '10' } = filters;
+    const {
+      category,
+      companyStage,
+      search,
+      page = '1',
+      limit = '10',
+    } = filters;
     const pageNum = parseInt(page);
     const limitNum = parseInt(limit);
     const skip = (pageNum - 1) * limitNum;
@@ -49,6 +55,10 @@ export class DocumentsService {
 
     if (category) {
       query.category = category;
+    }
+
+    if (companyStage) {
+      query.companyStage = companyStage;
     }
 
     if (search) {

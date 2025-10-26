@@ -61,6 +61,8 @@ export class BlogService {
       .limit(perPage)
       .sort({ createdAt: -1 });
 
+    console.log(blogs);
+
     return blogs;
   }
 
@@ -88,7 +90,13 @@ export class BlogService {
   ) {
     const updatedBlog = await this.blogModel.findByIdAndUpdate(
       id,
-      { title, content, coverPhotoId, category, author: updatedBy },
+      { 
+        title, 
+        content, 
+        coverPhotoId, 
+        category: category ? new Types.ObjectId(category) : undefined,
+        author: updatedBy 
+      },
       { new: true },
     );
 
@@ -100,8 +108,17 @@ export class BlogService {
   }
 
   async deleteBlog(id: string) {
+    // Check if this is a top startups article
+    const blog = await this.blogModel.findById(id);
+    if (!blog) throw new NotFoundException('Blog post not found');
+
+    if (blog.isTopStartups) {
+      throw new BadRequestException(
+        'Cannot delete the Top Startups featured article. You can only update it.',
+      );
+    }
+
     const deletedBlog = await this.blogModel.findByIdAndDelete(id);
-    if (!deletedBlog) throw new NotFoundException('Blog post not found');
     return { message: 'Blog deleted successfully' };
   }
 

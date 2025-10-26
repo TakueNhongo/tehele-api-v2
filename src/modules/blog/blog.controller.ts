@@ -60,6 +60,17 @@ export class BlogController {
     );
   }
 
+  @Get('website')
+  @ApiOperation({ summary: 'Fetch blog posts' })
+  async getBlogForWebsite(
+    @Query('search') search?: string,
+    @Query('category') category?: string,
+    @Query('page') page = 1,
+    @Query('perPage') perPage = 100,
+  ) {
+    return this.blogService.getBlogs(search, category, page, perPage, 'all');
+  }
+
   @Public()
   @Get('categories')
   @ApiOperation({ summary: 'Fetch blog categories' })

@@ -3,6 +3,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { AdminController } from './admin.controller';
 import { AdminService } from './admin.service';
 import { NotificationModule } from '../notification/notification.module';
+import { FilesModule } from '../files/files.module';
 
 // Importing Models
 import {
@@ -30,6 +31,14 @@ import {
   Investment,
   InvestmentSchema,
 } from '../investment/schemas/investment.schema';
+import {
+  StartupDDCache,
+  StartupDDCacheSchema,
+} from './schemas/startup-dd-cache.schema';
+import {
+  InvestorDDCache,
+  InvestorDDCacheSchema,
+} from './schemas/investor-dd-cache.schema';
 
 @Module({
   imports: [
@@ -43,8 +52,11 @@ import {
       { name: FundingHistory.name, schema: FundingHistorySchema },
       { name: Appointment.name, schema: AppointmentSchema },
       { name: Investment.name, schema: InvestmentSchema },
+      { name: StartupDDCache.name, schema: StartupDDCacheSchema },
+      { name: InvestorDDCache.name, schema: InvestorDDCacheSchema },
     ]),
     NotificationModule,
+    FilesModule,
   ],
   controllers: [AdminController],
   providers: [AdminService],

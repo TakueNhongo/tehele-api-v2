@@ -40,6 +40,11 @@ export class AdminController {
     return this.adminService.rejectInvestor(id);
   }
 
+  @Post('investors/:id/due-diligence')
+  async generateInvestorDueDiligence(@Param('id') id: string) {
+    return this.adminService.generateInvestorDueDiligence(id);
+  }
+
   // Startups
   @Get('startups')
   async getAllStartups() {
@@ -74,6 +79,11 @@ export class AdminController {
   @Patch('startups/:id/reject')
   async rejectStartup(@Param('id') id: string) {
     return this.adminService.rejectStartup(id);
+  }
+
+  @Post('startups/:id/due-diligence')
+  async generateStartupDueDiligence(@Param('id') id: string) {
+    return this.adminService.generateStartupDueDiligence(id);
   }
 
   @Public()

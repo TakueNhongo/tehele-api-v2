@@ -39,7 +39,7 @@ export class BlogService {
     category?: string,
     page = 1,
     perPage = 100,
-    profileType?: 'startup' | 'investor',
+    profileType?: 'startup' | 'investor' | 'all',
   ) {
     const filter: any = {
       isTopStartups: false,
@@ -49,7 +49,7 @@ export class BlogService {
     if (category) filter.category = new Types.ObjectId(category);
 
     // If profileType is provided, filter blogs to targetProfileType of that type or 'all'
-    if (profileType) {
+    if (profileType && profileType !== 'all') {
       filter.targetProfileType = { $in: [profileType, 'all'] };
     }
 
@@ -60,8 +60,6 @@ export class BlogService {
       .skip((page - 1) * perPage)
       .limit(perPage)
       .sort({ createdAt: -1 });
-
-    console.log(blogs);
 
     return blogs;
   }
@@ -90,12 +88,12 @@ export class BlogService {
   ) {
     const updatedBlog = await this.blogModel.findByIdAndUpdate(
       id,
-      { 
-        title, 
-        content, 
-        coverPhotoId, 
+      {
+        title,
+        content,
+        coverPhotoId,
         category: category ? new Types.ObjectId(category) : undefined,
-        author: updatedBy 
+        author: updatedBy,
       },
       { new: true },
     );

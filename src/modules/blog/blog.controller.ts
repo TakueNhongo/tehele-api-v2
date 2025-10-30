@@ -60,6 +60,7 @@ export class BlogController {
     );
   }
 
+  @Public()
   @Get('website')
   @ApiOperation({ summary: 'Fetch blog posts' })
   async getBlogForWebsite(
